@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} · Perimeter</title>
+<link rel="icon" href="/static/mark.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/public-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/jetbrains-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Main">
+    <a class="mark" href="/" aria-label="Perimeter home">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M10 2H4a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-6" fill="none" stroke="#ff2e4d" stroke-width="2.4" stroke-linecap="round"/><circle cx="13" cy="13" r="3.2" fill="#f4f4f5"/></svg>
+    </a>
+    <a class="rail-item" href="/" {{if eq .Nav "overview"}}aria-current="page"{{end}} aria-label="Overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>
+      <span class="rail-tip">Overview</span>
+    </a>
+    <a class="rail-item" href="/assets" {{if eq .Nav "assets"}}aria-current="page"{{end}} aria-label="Assets">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+      <span class="rail-tip">Assets</span>
+    </a>
+    <a class="rail-item" href="/events" {{if eq .Nav "events"}}aria-current="page"{{end}} aria-label="Events">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+      <span class="rail-tip">Events</span>
+    </a>
+    <span class="rail-gap"></span>
+    <a class="rail-item" href="/settings" {{if eq .Nav "settings"}}aria-current="page"{{end}} aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      <span class="rail-tip">Settings</span>
+    </a>
+  </nav>
+  <main class="canvas">
+    <div class="topline"><strong>Perimeter</strong><span class="sep">/</span><span>{{.Title}}</span></div>
+    {{if .Error}}<div class="flash error" role="alert">{{.Error}}</div>{{end}}
+    {{if .Flash}}<div class="flash ok" role="status">{{.Flash}}</div>{{end}}
+    {{template "content" .}}
+  </main>
+</div>
+</body>
+</html>

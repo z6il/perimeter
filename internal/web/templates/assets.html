@@ -1,0 +1,32 @@
+{{define "content"}}
+<div class="title-row">
+  <div>
+    <h1>Assets</h1>
+    <p class="finding">{{len .Data}} {{plural (len .Data) "domain or address" "domains and addresses"}} watched. Port scans run only on verified ones.</p>
+  </div>
+  <div class="title-actions"><a class="btn primary" href="/assets/new">Add an asset</a></div>
+</div>
+<div class="panel">
+  {{if .Data}}
+  <div class="table-wrap">
+  <table class="stack">
+    <thead><tr><th>Asset</th><th>Ownership</th><th class="r">Open ports</th><th>Worst issue</th><th class="r">Registration ends</th><th class="r">Last check</th></tr></thead>
+    <tbody>
+    {{range .Data}}
+      <tr>
+        <td class="wide"><a class="rowlink" href="/assets/{{.Asset.ID}}">{{.Asset.Value}}</a>{{if .Asset.ParentID}}<span class="cell-detail">subdomain</span>{{end}}</td>
+        <td>{{if .Asset.Verified}}<span class="pill ok">Verified</span>{{else}}<span class="pill">Not verified</span>{{end}}</td>
+        <td class="r num">{{if .Asset.Verified}}{{.Open}}{{else}}<span class="faint">—</span>{{end}}</td>
+        <td>{{if .Findings}}<span class="pill {{sev .Worst}}">{{sevLabel .Worst}}</span> <span class="faint">{{.Findings}} open</span>{{else}}<span class="faint">None</span>{{end}}</td>
+        <td class="r num">{{if .Asset.ExpiresAt}}{{date .Asset.ExpiresAt.UTC}}{{else}}<span class="faint">—</span>{{end}}</td>
+        <td class="r faint">{{ago .LastRun}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+  {{else}}
+  <p class="empty"><strong>No assets yet.</strong> <a class="rowlink" href="/assets/new">Add a domain or IP address</a> to start watching it.</p>
+  {{end}}
+</div>
+{{end}}

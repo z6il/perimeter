@@ -1,0 +1,19 @@
+{{define "content"}}
+<div class="title-row">
+  <div>
+    <h1>Events</h1>
+    <p class="finding">Everything Perimeter noticed, newest first. Medium and worse are also sent as alerts.</p>
+  </div>
+</div>
+<div class="panel events">
+  {{range .Data}}
+  <div class="ev">
+    <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}" title="{{datetime .CreatedAt}}">{{clock .CreatedAt}}</time>
+    <span class="sev {{sev .Severity}}" aria-label="{{sev .Severity}}"></span>
+    <div class="what">{{.Title}}{{if .Asset}}<a class="faint rowlink" href="/assets/{{.AssetID}}">{{.Asset}}</a>{{end}}{{if .Detail}}<pre>{{.Detail}}</pre>{{end}}</div>
+  </div>
+  {{else}}
+  <p class="empty">No events yet. They appear as soon as the first checks run.</p>
+  {{end}}
+</div>
+{{end}}

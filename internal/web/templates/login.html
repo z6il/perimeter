@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Perimeter</title>
+<link rel="icon" href="/static/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main class="login">
+  <form class="login-box" method="post" action="/login">
+    <div class="mark">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M10 2H4a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-6" fill="none" stroke="#ff2e4d" stroke-width="2.4" stroke-linecap="round"/><circle cx="13" cy="13" r="3.2" fill="#f4f4f5"/></svg>
+      Perimeter
+    </div>
+    <h1>Sign in</h1>
+    <p class="muted">Your internet-facing assets, watched.</p>
+    {{if .Error}}<div class="flash error" role="alert">{{.Error}}</div>{{end}}
+    <input type="hidden" name="next" value="{{.Data.Next}}">
+    <div class="field login-field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+    </div>
+    <div class="form-actions"><button class="btn primary" type="submit">Sign in</button></div>
+  </form>
+</main>
+</body>
+</html>

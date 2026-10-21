@@ -1,0 +1,197 @@
+{{define "content"}}{{$d := .Data}}{{$a := $d.Asset}}
+<div class="title-row">
+  <div>
+    <h1>{{$a.Value}}</h1>
+    <p class="finding">
+      {{if $d.Findings}}{{$f := index $d.Findings 0}}<b>{{len $d.Findings}} open {{plural (len $d.Findings) "issue" "issues"}}.</b> Worst: {{$f.Title}}.
+      {{else if not $a.Verified}}<b>Not verified yet.</b> Passive checks are running; port scans start once you prove you own it.
+      {{else}}<b>No open issues.</b> {{len $d.Ports}} open {{plural (len $d.Ports) "port" "ports"}}, all on the allowlist.{{end}}
+      {{if $d.Parent}}Subdomain of <a class="rowlink" href="/assets/{{$d.Parent.ID}}">{{$d.Parent.Value}}</a>.{{end}}
+    </p>
+  </div>
+  <div class="title-actions">
+    <span class="stamp"><span class="dot {{if $d.Busy}}busy{{end}}"></span>{{if $d.Busy}}Checking now…{{else}}{{if eq $a.Kind "ip"}}IP address{{else}}Domain{{end}} · {{if $a.Verified}}verified by {{$a.VerifyMethod}}{{else}}not verified{{end}}{{end}}</span>
+    <form class="inline" method="post" action="{{$d.Self}}/scan"><button class="btn primary" type="submit" {{if $d.Busy}}disabled{{end}}>Check now</button></form>
+  </div>
+</div>
+
+<section class="section">
+  <h2 class="visually-hidden">Checks</h2>
+  <div class="panel kpis checks">
+    {{range $d.Checks}}{{if or .Applies (eq .Name "ports")}}
+    <div class="kpi">
+      <div class="kpi-label">{{.Label}}</div>
+      <div class="check-when {{if .Run.Error}}err{{end}}">{{if .Applies}}{{if .Run.Error}}failed {{ago .Run.At}}{{else}}{{ago .Run.At}}{{end}}{{else}}off until verified{{end}}</div>
+      <div class="kpi-sub" {{if .Run.Error}}title="{{.Run.Error}}"{{end}}>{{if .Applies}}{{interval .Name}}{{if .Run.Error}} · retrying in 30 min{{end}}{{else}}needs proof of ownership{{end}}</div>
+    </div>
+    {{end}}{{end}}
+  </div>
+</section>
+
+{{if not $a.Verified}}
+<section class="section">
+  <div class="section-head"><h2>Prove you own {{$a.Value}}</h2><span class="meta">Needed before any port scan</span></div>
+  <form class="panel pad" method="post" action="{{$d.Self}}/verify">
+    <div class="steps">
+    {{if eq $a.Kind "domain"}}
+      <div class="step">
+        <h3>Add this TXT record at your DNS provider</h3>
+        <dl class="kv">
+          <dt>Name</dt><dd><div class="code"><code>{{txtName $a.Value}}</code><button class="btn small" type="button" data-copy="{{txtName $a.Value}}">Copy</button></div></dd>
+          <dt>Value</dt><dd><div class="code"><code>{{$a.Token}}</code><button class="btn small" type="button" data-copy="{{$a.Token}}">Copy</button></div></dd>
+        </dl>
+        <p class="faint">Putting the same value on {{$a.Value}} itself also works. DNS changes can take a few minutes to show.</p>
+      </div>
+    {{else}}
+      {{if isPrivate $a.Value}}
+      <div class="step">
+        <h3>A private address</h3>
+        <label><input type="checkbox" name="local"> {{$a.Value}} is on a network I run</label>
+      </div>
+      {{end}}
+      <div class="step">
+        <h3>{{if isPrivate $a.Value}}Or serve{{else}}Serve{{end}} this file from {{$a.Value}}</h3>
+        <dl class="kv">
+          <dt>Address</dt><dd><div class="code"><code>http://{{$a.Value}}{{filePath}}</code></div></dd>
+          <dt>Contents</dt><dd><div class="code"><code>{{$a.Token}}</code><button class="btn small" type="button" data-copy="{{$a.Token}}">Copy</button></div></dd>
+        </dl>
+      </div>
+    {{end}}
+    </div>
+    <div class="form-actions"><button class="btn primary" type="submit">Verify now</button></div>
+  </form>
+</section>
+{{end}}
+
+{{if $d.Findings}}
+<section class="section">
+  <div class="section-head"><h2>Open issues</h2><span class="meta">{{len $d.Findings}} on this asset</span></div>
+  <div class="panel table-wrap">
+    <table class="stack">
+      <thead><tr><th>Severity</th><th>Issue</th><th class="r">Since</th><th class="r"><span class="visually-hidden">Action</span></th></tr></thead>
+      <tbody>
+      {{range $d.Findings}}
+        <tr>
+          <td><span class="pill {{sev .Severity}}">{{sevLabel .Severity}}</span></td>
+          <td class="wide"><span class="cell-title">{{.Title}}</span><span class="cell-detail">{{.Detail}}</span></td>
+          <td class="r num faint">{{datetime .FirstSeen}}</td>
+          <td class="r">{{if eq (slice .Key 0 5) "port:"}}
+            <form class="inline" method="post" action="{{$d.Self}}/allow"><input type="hidden" name="port" value="{{portOfKey .Key}}"><input type="hidden" name="back" value="{{$d.Self}}"><button class="btn small" type="submit">Allow</button></form>
+          {{end}}</td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{end}}
+
+<div class="grid section">
+  <div class="span-7">
+  <section>
+    <div class="section-head"><h2>Open ports</h2><span class="meta">{{if $a.Verified}}{{len $d.Ports}} open of {{len portList}} scanned{{else}}scans off until verified{{end}}</span></div>
+    <div class="panel">
+      {{if $d.Ports}}
+      <div class="table-wrap">
+      <table class="stack">
+        <thead><tr><th class="r">Port</th><th>Service</th><th class="r">First seen</th><th class="r">Allowlist</th></tr></thead>
+        <tbody>
+        {{range $d.Ports}}
+          <tr>
+            <td class="r num">{{.Port.Port}}</td>
+            <td class="wide"><span class="cell-title">{{if .Label}}{{.Label}}{{else}}Unknown service{{end}}</span>{{if .Banner}}<span class="cell-detail clip mono">{{.Banner}}</span>{{end}}</td>
+            <td class="r num faint">{{date .FirstSeen}}</td>
+            <td class="r">{{if .Allowed}}<span class="pill ok">Allowed</span>{{else}}<span class="pill high">Unexpected</span>{{end}}</td>
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="empty">{{if $a.Verified}}None of the {{len portList}} scanned ports answered.{{else}}Port scans start after you verify ownership above.{{end}}</p>
+      {{end}}
+      <form class="pad allow-form" method="post" action="{{$d.Self}}/ports">
+        <div class="field">
+          <label for="ports">Ports that should be open</label>
+          <div class="code"><input id="ports" name="ports" type="text" value="{{ports $a.AllowedPorts}}" placeholder="22, 80, 443"><button class="btn" type="submit">Save</button></div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+    <section>
+      <div class="section-head stacked"><h2>TLS certificates</h2><span class="meta">{{len $d.Certs}} checked</span></div>
+      <div class="panel runway">
+        {{range $d.Certs}}
+        <div class="rw-row">
+          <span class="rw-name mono">{{hostPort .Host .Port}}</span>
+          <span class="rw-days">{{if .NotAfter}}{{days .NotAfter.UTC}} d{{else}}—{{end}}</span>
+          <span class="rw-kind">{{.Issuer}} · {{.Version}}{{if .NotAfter}} · until {{date .NotAfter.UTC}}{{end}}</span>
+          {{if .Problem}}<span class="rw-kind err">{{.Problem}}</span>{{end}}
+        </div>
+        {{else}}
+        <p class="empty">No TLS endpoint answered yet{{if eq $a.Kind "ip"}}; on an IP, certificates are checked on open TLS ports after verification{{end}}.</p>
+        {{end}}
+      </div>
+    </section>
+
+    {{if eq $a.Kind "domain"}}
+    <section>
+      <div class="section-head stacked"><h2>DNS records</h2><span class="meta">{{len $d.DNS}} records</span></div>
+      <div class="panel">
+        {{if $d.DNS}}
+        <table><tbody>
+          {{range $d.DNS}}<tr><td class="mono dns">{{.}}</td></tr>{{end}}
+        </tbody></table>
+        {{else}}
+        <p class="empty">No records recorded yet.</p>
+        {{end}}
+      </div>
+    </section>
+    {{end}}
+  </div>
+
+  <section class="span-5">
+    <div class="section-head"><h2>History</h2><span class="meta">Last {{len $d.Events}} events</span></div>
+    <div class="panel events side">
+      {{range $d.Events}}
+      <div class="ev">
+        <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}" title="{{datetime .CreatedAt}}">{{clock .CreatedAt}}</time>
+        <span class="sev {{sev .Severity}}" aria-label="{{sev .Severity}}"></span>
+        <div class="what">{{.Title}}{{if .Detail}}<pre>{{.Detail}}</pre>{{end}}</div>
+      </div>
+      {{end}}
+    </div>
+  </section>
+</div>
+
+{{if eq $a.Kind "domain"}}{{if not $a.ParentID}}
+<section class="section">
+  <div class="section-head"><h2>Subdomains from certificate logs</h2><span class="meta">{{len $d.Subdomains}} known</span></div>
+  <div class="panel">
+    {{if $d.Subdomains}}
+    <div class="exposure">
+      {{range $d.Subdomains}}
+      <div class="exp-row sub-row">
+        <span class="mono">{{.}}</span>
+        <span></span>
+        {{with index $d.Watched .}}<a class="btn small" href="/assets/{{.}}">Watching</a>{{else}}
+        <form class="inline" method="post" action="{{$d.Self}}/watch"><input type="hidden" name="name" value="{{.}}"><button class="btn small" type="submit">Watch</button></form>{{end}}
+      </div>
+      {{end}}
+    </div>
+    {{else}}
+    <p class="empty">No named subdomains in certificate transparency logs. A wildcard certificate covers names without listing them.</p>
+    {{end}}
+  </div>
+</section>
+{{end}}{{end}}
+
+<section class="section">
+  <div class="section-head"><h2>Stop watching</h2></div>
+  <form class="panel pad danger-zone" method="post" action="{{$d.Self}}/delete">
+    <p class="muted">Removes {{$a.Value}} and its whole history{{if not $a.ParentID}}, including any subdomains you added under it{{end}}. Type the name to confirm.</p>
+    <div class="code"><input name="confirm" type="text" autocomplete="off" spellcheck="false" placeholder="{{$a.Value}}" aria-label="Type {{$a.Value}} to confirm"><button class="btn danger" type="submit">Stop watching</button></div>
+  </form>
+</section>
+{{end}}

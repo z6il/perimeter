@@ -1,0 +1,14 @@
+services:
+  perimeter:
+    image: ghcr.io/z6il/perimeter:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - perimeter-data:/data
+    environment:
+      # Leave unset to get a generated password in the logs on first start.
+      PERIMETER_PASSWORD: ${PERIMETER_PASSWORD:-}
+
+volumes:
+  perimeter-data:

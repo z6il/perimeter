@@ -1,0 +1,139 @@
+{{define "content"}}{{$d := .Data}}
+<div class="title-row">
+  <div>
+    <h1>Overview</h1>
+    <p class="finding"><b {{if $d.Lead.Hot}}class="hot"{{end}}>{{$d.Lead.Strong}}</b> {{$d.Lead.Rest}}</p>
+  </div>
+  <div class="title-actions">
+    <span class="stamp"><span class="dot"></span>Last check {{ago $d.LastCheck}}</span>
+    {{if $d.AssetCount}}
+    <form class="inline" method="post" action="/scan"><button class="btn primary" type="submit">Check all now</button></form>
+    {{else}}
+    <a class="btn primary" href="/assets/new">Add an asset</a>
+    {{end}}
+  </div>
+</div>
+
+{{if $d.AssetCount}}
+<section class="section">
+  <div class="panel kpis">
+    {{range $d.KPIs}}
+    <div class="kpi">
+      <div class="kpi-label">{{.Label}}</div>
+      <div class="kpi-value {{if .Hot}}hot{{end}}">{{.Value}}{{if .Unit}}<span class="unit">{{.Unit}}</span>{{end}}</div>
+      <div class="kpi-sub">{{.Sub}}</div>
+    </div>
+    {{end}}
+  </div>
+</section>
+
+<div class="grid section">
+  <section class="span-8">
+    <div class="section-head">
+      <h2>Needs attention</h2>
+      {{if $d.MoreFind}}<a class="meta rowlink" href="/assets">{{$d.MoreFind}} more on the assets page</a>{{end}}
+    </div>
+    <div class="panel">
+      {{if $d.Findings}}
+      <div class="table-wrap">
+      <table class="stack">
+        <thead><tr><th>Severity</th><th>Issue</th><th>Asset</th><th class="r">Since</th><th class="r"><span class="visually-hidden">Action</span></th></tr></thead>
+        <tbody>
+        {{range $d.Findings}}
+          <tr>
+            <td><span class="pill {{sev .Severity}}">{{sevLabel .Severity}}</span></td>
+            <td class="wide"><span class="cell-title">{{.Title}}</span><span class="cell-detail">{{.Detail}}</span></td>
+            <td><a class="rowlink truncate" href="/assets/{{.AssetID}}">{{.Asset}}</a></td>
+            <td class="r num faint">{{clock .FirstSeen}}</td>
+            <td class="r">
+              {{if eq (slice .Key 0 5) "port:"}}
+              <form class="inline" method="post" action="/assets/{{.AssetID}}/allow">
+                <input type="hidden" name="port" value="{{portOfKey .Key}}"><input type="hidden" name="back" value="/">
+                <button class="btn small" type="submit" title="Add port {{portOfKey .Key}} to the allowlist">Allow</button>
+              </form>
+              {{else}}<a class="btn small" href="/assets/{{.AssetID}}">Open</a>{{end}}
+            </td>
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="empty"><strong>No open issues.</strong> Every open port is on its allowlist and nothing is close to expiring.</p>
+      {{end}}
+    </div>
+  </section>
+
+  <section class="span-4">
+    <div class="section-head"><h2>Expiring next</h2><span class="meta">90-day scale</span></div>
+    <div class="panel runway">
+      {{range $d.Expiring}}
+      <a class="rw-row" href="/assets/{{.AssetID}}">
+        <span class="rw-name">{{.Name}}</span>
+        <span class="rw-days {{.Class}}">{{if lt .Days 0}}expired{{else}}{{.Days}} d{{end}}</span>
+        <span class="rw-track" aria-hidden="true"><span class="rw-fill {{.Class}}" style="width:{{.Pct}}%"></span></span>
+        <span class="rw-kind">{{.Kind}}</span>
+      </a>
+      {{else}}
+      <p class="empty">No certificates or registrations recorded yet. They appear after the first TLS and expiry checks.</p>
+      {{end}}
+    </div>
+
+    <div class="section-head stacked"><h2>Next checks</h2><a class="meta rowlink" href="/settings">{{if $d.Alerts.Enabled}}Alerts on{{else}}Alerts off · set up{{end}}</a></div>
+    <div class="panel">
+      <table><tbody>
+        {{range $d.Next}}
+        <tr><td><span class="cell-title">{{.Label}}</span><span class="cell-detail">{{.Assets}} {{plural .Assets "asset" "assets"}}</span></td><td class="r num faint">{{.In}}</td></tr>
+        {{end}}
+      </tbody></table>
+    </div>
+  </section>
+</div>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Exposure map</h2>
+    <span class="meta">Red ports are open but not on the asset's allowlist</span>
+  </div>
+  <div class="panel exposure">
+    {{range $d.Exposure}}
+    <div class="exp-row">
+      <div class="exp-name">
+        <a class="rowlink" href="/assets/{{.Asset.ID}}">{{.Asset.Value}}</a>
+        <span class="faint">{{if .Asset.Verified}}Verified{{else}}Not verified{{end}} · {{.Asset.Kind}}</span>
+      </div>
+      <div class="ports">
+        {{range .Ports}}<span class="port {{if not .Allowed}}open-bad{{end}}">{{.Port}}{{if .Label}}<span class="svc">{{.Label}}</span>{{end}}</span>{{end}}
+        {{if .Note}}<span class="faint">{{.Note}}</span>{{end}}
+      </div>
+      <div class="exp-count">{{len .Ports}} open</div>
+    </div>
+    {{end}}
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Latest events</h2><a class="meta rowlink" href="/events">All events</a></div>
+  <div class="panel events">
+    {{range $d.Events}}
+    <div class="ev">
+      <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{clock .CreatedAt}}</time>
+      <span class="sev {{sev .Severity}}" aria-label="{{sev .Severity}}"></span>
+      <div class="what">{{.Title}}{{if .Asset}}<span class="faint">{{.Asset}}</span>{{end}}</div>
+    </div>
+    {{end}}
+  </div>
+</section>
+{{else}}
+<section class="section">
+  <div class="panel pad">
+    <div class="steps">
+      <div class="step"><h3>Add a domain or IP address</h3><p class="muted">Perimeter starts with passive checks right away: DNS records, certificate logs, domain expiry and the HTTPS certificate.</p></div>
+      <div class="step"><h3>Prove you own it</h3><p class="muted">Add a DNS TXT record or a small file. Port scans only ever run on assets you have verified.</p></div>
+      <div class="step"><h3>Allow what should be open</h3><p class="muted">List the ports you expect. Anything else that opens raises an alert.</p></div>
+    </div>
+    <div class="form-actions"><a class="btn primary" href="/assets/new">Add an asset</a></div>
+  </div>
+</section>
+{{end}}
+{{end}}

@@ -1,0 +1,37 @@
+{{define "content"}}
+<div class="title-row">
+  <div>
+    <h1>Add an asset</h1>
+    <p class="finding">A domain you own, or a public or private IP address. Passive checks start straight away; port scans start after you prove ownership.</p>
+  </div>
+</div>
+<div class="grid">
+  <form class="panel pad span-7" method="post" action="/assets">
+    <div class="field">
+      <label for="value">Domain or IP address</label>
+      <input id="value" name="value" type="text" required autocomplete="off" spellcheck="false" placeholder="yourdomain.com or 203.0.113.10" autofocus>
+      <span class="help">A URL is fine too; Perimeter keeps only the host name.</span>
+    </div>
+    <div class="field">
+      <label for="ports">Ports that should be open</label>
+      <input id="ports" name="ports" type="text" autocomplete="off" placeholder="22, 80, 443">
+      <span class="help">Anything else found open raises an alert. You can change this later, or allow a port from its alert in one click.</span>
+    </div>
+    <div class="field">
+      <label><input type="checkbox" name="local"> This is a private address on a network I run</label>
+      <span class="help">Only for 10.x, 172.16–31.x, 192.168.x and loopback addresses. Public addresses always need proof of ownership.</span>
+    </div>
+    <div class="form-actions"><button class="btn primary" type="submit">Add and start checks</button><a class="btn text" href="/assets">Cancel</a></div>
+  </form>
+  <aside class="span-5 panel pad">
+    <h2 class="panel-title">What runs, and when</h2>
+    <dl class="kv">
+      <dt>DNS records</dt><dd>every hour, passive</dd>
+      <dt>Certificate logs</dt><dd>every 12 hours, passive (crt.sh)</dd>
+      <dt>Domain expiry</dt><dd>every 24 hours, passive (RDAP)</dd>
+      <dt>TLS certificates</dt><dd>every 12 hours; an ordinary HTTPS visit</dd>
+      <dt>Port scan</dt><dd>every 6 hours, verified assets only; {{len portList}} common ports, a gentle TCP connect scan</dd>
+    </dl>
+  </aside>
+</div>
+{{end}}

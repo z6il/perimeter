@@ -1,0 +1,91 @@
+{{define "content"}}{{$c := .Data.Alerts}}
+<div class="title-row">
+  <div>
+    <h1>Settings</h1>
+    <p class="finding">{{if $c.Enabled}}Alerts are on for <b>{{$c.MinSeverity}}</b> and worse.{{else}}<b>Alerts are off.</b> Add at least one destination so changes reach you.{{end}}</p>
+  </div>
+</div>
+
+<form method="post" action="/settings/alerts">
+  <div class="setting">
+    <div>
+      <h2>Telegram</h2>
+      <p class="about">Create a bot with @BotFather, add it to your group or chat, and paste its token and the chat ID.</p>
+    </div>
+    <div>
+      <div class="field">
+        <label for="telegram_token">Bot token</label>
+        <input id="telegram_token" name="telegram_token" type="password" autocomplete="off" placeholder="{{if .Data.HasToken}}Saved. Type a new one to replace it{{else}}123456789:AA…{{end}}">
+        {{if .Data.HasToken}}<label class="help"><input type="checkbox" name="telegram_clear"> Remove the saved token</label>{{end}}
+      </div>
+      <div class="field">
+        <label for="telegram_chat">Chat ID</label>
+        <input id="telegram_chat" name="telegram_chat" type="text" value="{{$c.TelegramChat}}" autocomplete="off" placeholder="-1001234567890">
+      </div>
+      <div class="preview" aria-label="How an alert arrives in Telegram">
+        <div class="who">Perimeter</div>
+        <div><span class="sev-dot" aria-hidden="true"></span><b>Unexpected open port 3306 (MySQL)</b></div>
+        <div><code>api.yourdomain.com</code></div>
+        <div>203.0.113.10:3306 is reachable from the internet. If this is intended, add the port to the allowlist.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="setting">
+    <div>
+      <h2>Slack and webhooks</h2>
+      <p class="about">A Slack incoming webhook, and any URL that should receive each alert as JSON (n8n, Discord via a bridge, your own service).</p>
+    </div>
+    <div>
+      <div class="field">
+        <label for="slack_url">Slack webhook URL</label>
+        <input id="slack_url" name="slack_url" type="url" value="{{$c.SlackURL}}" autocomplete="off" placeholder="https://hooks.slack.com/services/…">
+      </div>
+      <div class="field">
+        <label for="webhook_url">Webhook URL</label>
+        <input id="webhook_url" name="webhook_url" type="url" value="{{$c.WebhookURL}}" autocomplete="off" placeholder="https://n8n.yourdomain.com/webhook/perimeter">
+        <span class="help">Receives <code class="mono">{"severity", "title", "detail", "asset", "asset_id", "time", "url"}</code>.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="setting">
+    <div>
+      <h2>What to send</h2>
+      <p class="about">Every event is kept on the timeline. Only events at this level or worse are sent.</p>
+    </div>
+    <div>
+      <div class="field">
+        <label for="min_severity">Send alerts for</label>
+        <select id="min_severity" name="min_severity">
+          {{range .Data.Levels}}<option value="{{.}}" {{if eq . (sev $c.MinSeverity)}}selected{{end}}>{{.}} and worse</option>{{end}}
+        </select>
+      </div>
+      <div class="field">
+        <label for="public_url">Dashboard address</label>
+        <input id="public_url" name="public_url" type="url" value="{{$c.PublicURL}}" autocomplete="off" placeholder="https://perimeter.yourdomain.com">
+        <span class="help">Used for the "Open in Perimeter" link in each alert. Leave empty to send no link.</span>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" type="submit">Save alert settings</button>
+        <button class="btn" type="submit" formaction="/settings/test" {{if not $c.Enabled}}disabled title="Save a destination first"{{end}}>Send a test alert</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<form method="post" action="/settings/password">
+  <div class="setting">
+    <div>
+      <h2>Password</h2>
+      <p class="about">The one admin password for this dashboard. Setting <code class="mono">PERIMETER_PASSWORD</code> overrides it on every start.</p>
+    </div>
+    <div>
+      <div class="field"><label for="current">Current password</label><input id="current" name="current" type="password" autocomplete="current-password" required></div>
+      <div class="field"><label for="new">New password</label><input id="new" name="new" type="password" autocomplete="new-password" minlength="12" required><span class="help">At least 12 characters.</span></div>
+      <div class="form-actions"><button class="btn" type="submit">Change password</button></div>
+    </div>
+  </div>
+</form>
+<p class="faint version">Perimeter {{.Version}}</p>
+{{end}}
